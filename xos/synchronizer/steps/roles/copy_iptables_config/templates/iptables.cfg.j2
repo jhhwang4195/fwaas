@@ -1,0 +1,65 @@
+
+{#
+Copyright 2017-present Open Networking Foundation
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+#Configuration for {{firewall.firewall_name}}
+#Updated : {{update_time}}
+
+iptables -F
+iptables -X
+iptables -Z
+
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT DROP
+
+{% for rule in rules.rules %}
+{% if rule.enabled %}
+{% if rule.protocol %}
+{% set protocol = "-p %s"|format(rule.protocol) %}
+{% else %}
+{% set protocol = "" %}
+{% endif %}
+{% if rule.src_ip %}
+{% set src_ip = "-s %s"|format(rule.src_ip) %}
+{% else -%}
+{% set src_ip = "" %}
+{% endif %}
+{% if rule.src_port %}
+{% set src_port = "--sport %s"|format(rule.src_port) %}
+{% else %}
+{% set src_port = "" %}
+{% endif %}
+{% if rule.dst_ip %}
+{% set dst_ip = "-d %s"|format(rule.dst_ip) %}
+{% else %}
+{% set dst_ip = "" %}
+{% endif %}
+{% if rule.dst_port %}
+{% set dst_port = "--dport %s"|format(rule.dst_port) %}
+{% else %}
+{% set dst_port = "" %}
+{% endif %}
+{% if rule.action == "allow" %}
+{% set action = "-j ALLOW" %}
+{% elif rule.action == "deny" %}
+{% set action = "-j REJECT" %}
+{% else %}
+{% set action = "" %}
+{% endif %}
+{{ "iptables -A INPUT %s %s %s %s %s %s"|e|format(protocol, src_ip, src_port, dst_ip, dst_port, action) }}
+{% endif %}
+{% endfor %}
